@@ -13,7 +13,7 @@ const EMPTY_FORM = { fullName: '', staffId: '', role: 'Cashier', password: '' }
 
 function StaffModal({ open, onClose, existing }) {
   const qc = useQueryClient()
-  const isEdit = !!existing
+  const isEdit = !!existing  
 
   const [form, setForm] = useState(existing ?? EMPTY_FORM)
   const [errors, setErrors] = useState({})
