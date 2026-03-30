@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-obsidian-700;
+  }
+
+  :root {
+    --color-bg:       #050403;
+    --color-surface:  #0a0904;
+    --color-panel:    #111008;
+    --color-border:   rgba(212,168,83,0.12);
+    --color-gold:     #D4A853;
+    --color-gold-dim: #8B7355;
+    --scrollbar-w:    6px;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Premium scrollbar */
+  ::-webkit-scrollbar       { width: var(--scrollbar-w); height: var(--scrollbar-w); }
+  ::-webkit-scrollbar-track { background: #0a0904; }
+  ::-webkit-scrollbar-thumb { background: #2e2c26; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4a4840; }
+
+  ::selection { background: rgba(212,168,83,0.25); color: #fff; }
+}
+
+@layer components {
+  /* Gold accent border utility */
+  .border-gold {
+    border-color: var(--color-border);
+  }
+
+  /* Glassmorphism card */
+  .glass-card {
+    @apply bg-obsidian-900/60 backdrop-blur-sm border border-[rgba(212,168,83,0.1)] rounded-xl;
+  }
+
+  /* Shimmer loading skeleton */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #1c1a16 25%,
+      #2e2c26 50%,
+      #1c1a16 75%
+    );
+    background-size: 200% 100%;
+    @apply animate-shimmer rounded;
+  }
+
+  /* Stat card */
+  .stat-card {
+    @apply glass-card p-5 relative overflow-hidden;
+  }
+  .stat-card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: radial-gradient(circle at 50% 0%, rgba(212,168,83,0.06) 0%, transparent 70%);
+  }
+  .stat-card:hover::before { @apply opacity-100; }
+
+  /* Primary button */
+  .btn-primary {
+    @apply bg-receipt-gold text-obsidian-950 font-semibold px-4 py-2.5 rounded-lg
+           hover:bg-amber-400 active:scale-95 transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed
+           flex items-center gap-2 text-sm;
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply bg-transparent border border-[rgba(212,168,83,0.2)] text-obsidian-300 px-4 py-2.5 rounded-lg
+           hover:border-receipt-gold hover:text-receipt-gold active:scale-95 transition-all duration-150
+           flex items-center gap-2 text-sm;
+  }
+
+  /* Danger button */
+  .btn-danger {
+    @apply bg-transparent border border-red-800/40 text-red-400 px-4 py-2.5 rounded-lg
+           hover:bg-red-900/20 hover:border-red-600 active:scale-95 transition-all duration-150
+           flex items-center gap-2 text-sm;
+  }
+
+  /* Input field */
+  .field {
+    @apply bg-obsidian-800 border border-[rgba(212,168,83,0.15)] rounded-lg px-3.5 py-2.5
+           text-sm text-obsidian-100 placeholder-obsidian-500
+           focus:outline-none focus:border-receipt-gold focus:ring-1 focus:ring-receipt-gold/20
+           transition-all duration-150 w-full;
+  }
+
+  /* Label */
+  .field-label {
+    @apply block text-xs font-mono text-obsidian-400 uppercase tracking-widest mb-1.5;
+  }
+
+  /* Badge */
+  .badge-paid   { @apply inline-flex items-center gap-1 text-xs font-mono px-2 py-0.5 rounded-full bg-green-900/30 text-green-400 border border-green-800/40; }
+  .badge-unpaid { @apply inline-flex items-center gap-1 text-xs font-mono px-2 py-0.5 rounded-full bg-amber-900/30 text-amber-400 border border-amber-800/40; }
+  .badge-low    { @apply inline-flex items-center gap-1 text-xs font-mono px-2 py-0.5 rounded-full bg-orange-900/30 text-orange-400 border border-orange-800/40; }
+  .badge-admin  { @apply inline-flex items-center gap-1 text-xs font-mono px-2 py-0.5 rounded-full bg-purple-900/30 text-purple-400 border border-purple-800/40; }
+
+  /* Page header divider */
+  .page-divider {
+    @apply h-px bg-gradient-to-r from-receipt-gold/30 via-receipt-gold/10 to-transparent mb-6;
+  }
+
+  /* Table row */
+  .tr-base {
+    @apply border-b border-[rgba(212,168,83,0.06)] hover:bg-obsidian-800/40 transition-colors duration-100;
+  }
+  .th-base {
+    @apply text-left text-xs font-mono text-obsidian-500 uppercase tracking-widest px-4 py-3;
+  }
+  .td-base {
+    @apply px-4 py-3.5 text-sm text-obsidian-200;
+  }
+}
