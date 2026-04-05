@@ -44,11 +44,23 @@ function cartReducer(state, action) {
         ),
       }
     case 'CLEAR':
-      return { ...state, items: [] }
+      return { ...state, items: [], paymentBreakdown: null }
     case 'SET_CUSTOMER':
       return { ...state, customerName: action.name }
     case 'SET_PAYMENT':
-      return { ...state, paymentMethod: action.method }
+      return {
+        ...state,
+        paymentMethod: Array.isArray(action.method)
+          ? action.method
+          : [{ method: action.method, amount: 0 }],
+        paymentBreakdown: null,
+      }
+    case 'SET_MULTIPLE_PAYMENT':
+      return {
+        ...state,
+        paymentMethod: action.paymentArray,
+        paymentBreakdown: action.paymentBreakdown ?? null,
+      }
     case 'SET_STATUS':
       return { ...state, status: action.status }
     default:
@@ -59,7 +71,8 @@ function cartReducer(state, action) {
 const initialState = {
   items:         [],
   customerName:  '',
-  paymentMethod: 'Cash',
+  paymentMethod: [{ method: 'Cash', amount: 0 }],
+  paymentBreakdown: null,
   status:        true,
 }
 
@@ -72,13 +85,16 @@ export function CartProvider({ children }) {
   const clearCart    = useCallback(() => dispatch({ type: 'CLEAR' }), [])
   const setCustomer  = useCallback((name) => dispatch({ type: 'SET_CUSTOMER', name }), [])
   const setPayment   = useCallback((method) => dispatch({ type: 'SET_PAYMENT', method }), [])
+  const setMultiplePayment = useCallback((paymentArray, paymentBreakdown) => (
+    dispatch({ type: 'SET_MULTIPLE_PAYMENT', paymentArray, paymentBreakdown })
+  ), [])
   const setStatus    = useCallback((status) => dispatch({ type: 'SET_STATUS', status }), [])
 
   const total = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0)
   const count = cart.items.reduce((sum, i) => sum + i.quantity, 0)
 
   return (
-    <CartContext.Provider value={{ cart, total, count, addItem, removeItem, setQty, clearCart, setCustomer, setPayment, setStatus }}>
+    <CartContext.Provider value={{ cart, total, count, addItem, removeItem, setQty, clearCart, setCustomer, setPayment, setMultiplePayment, setStatus }}>
       {children}
     </CartContext.Provider>
   )

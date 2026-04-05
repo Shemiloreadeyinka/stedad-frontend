@@ -129,3 +129,5 @@ export function StatusBadge({ status }) {
     </span>
   )
 }
+
+export { MultiplePaymentModal } from './MultiplePaymentModal'

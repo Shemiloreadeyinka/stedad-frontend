@@ -9,19 +9,30 @@ import {
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
-const EMPTY_FORM = { fullName: '', staffId: '', role: 'Cashier', password: '' }
+const EMPTY_FORM = { fullname: '', password: '', isActive: true, role: 'cashier', pfp: '' }
 
 function StaffModal({ open, onClose, existing }) {
   const qc = useQueryClient()
   const isEdit = !!existing  
 
-  const [form, setForm] = useState(existing ?? EMPTY_FORM)
+  const [form, setForm] = useState(() => {
+    if (existing) {
+      return {
+        fullname: existing.fullName || existing.fullname || existing.name || '',
+        role: existing.role || 'cashier',
+        pfp: existing.pfp || '',
+        isActive: existing.isActive !== undefined ? existing.isActive : true,
+        password: '', // not used in edit
+      }
+    }
+    return EMPTY_FORM
+  })
   const [errors, setErrors] = useState({})
 
   const { mutate, isPending } = useMutation({
     mutationFn: () =>
       isEdit
-        ? staffApi.update(existing._id, { fullName: form.fullName, role: form.role })
+        ? staffApi.update(existing._id, { fullname: form.fullname, role: form.role })
         : staffApi.create(form),
     onSuccess: () => {
       toast.success(isEdit ? 'Staff updated' : 'Staff created')
@@ -33,33 +44,36 @@ function StaffModal({ open, onClose, existing }) {
 
   const validate = () => {
     const e = {}
-    if (!form.fullName.trim()) e.fullName = 'Required'
-    if (!isEdit && !form.staffId.trim()) e.staffId = 'Required'
+    if (!form.fullname.trim()) e.fullname = 'Required'
     if (!isEdit && !form.password.trim()) e.password = 'Required'
+    if (!form.pfp.trim()) e.pfp = 'Required'
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
   const handleSubmit = () => { if (validate()) mutate() }
   const set = (k) => (e) => { setErrors((v) => ({ ...v, [k]: '' })); setForm((f) => ({ ...f, [k]: e.target.value })) }
+  const setCheckbox = (k) => (e) => { setErrors((v) => ({ ...v, [k]: '' })); setForm((f) => ({ ...f, [k]: e.target.checked })) }
 
   return (
     <Modal open={open} onClose={onClose} title={isEdit ? 'Edit Staff Member' : 'Add Staff Member'}>
       <div className="space-y-4">
-        <FormField label="Full Name" error={errors.fullName}>
-          <input value={form.fullName} onChange={set('fullName')} placeholder="Ada Okonkwo" className="field" />
+        <FormField label="Full Name" error={errors.fullname}>
+          <input value={form.fullname} onChange={set('fullname')} placeholder="Ada Okonkwo" className="field" />
         </FormField>
-
-        {!isEdit && (
-          <FormField label="Staff ID" error={errors.staffId}>
-            <input value={form.staffId} onChange={set('staffId')} placeholder="STF-001" className="field font-mono" />
-          </FormField>
-        )}
 
         <FormField label="Role">
           <Select value={form.role} onChange={set('role')}>
-            {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+            {ROLES.map((r) => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
           </Select>
+        </FormField>
+
+        <FormField label="Profile Picture URL" error={errors.pfp}>
+          <input value={form.pfp} onChange={set('pfp')} placeholder="https://example.com/avatar.jpg" className="field" />
+        </FormField>
+
+        <FormField label="Active">
+          <input type="checkbox" checked={form.isActive} onChange={setCheckbox('isActive')} className="field" />
         </FormField>
 
         {!isEdit && (
@@ -81,9 +95,9 @@ function StaffModal({ open, onClose, existing }) {
 }
 
 const ROLE_BADGE = {
-  Admin:   'bg-purple-900/30 text-purple-400 border-purple-800/40',
-  Manager: 'bg-blue-900/30 text-blue-400 border-blue-800/40',
-  Cashier: 'bg-obsidian-800/60 text-obsidian-400 border-obsidian-700/40',
+  admin:   'bg-purple-900/30 text-purple-400 border-purple-800/40',
+  manager: 'bg-blue-900/30 text-blue-400 border-blue-800/40',
+  cashier: 'bg-obsidian-800/60 text-obsidian-400 border-obsidian-700/40',
 }
 
 export default function StaffPage() {
@@ -163,8 +177,8 @@ export default function StaffPage() {
                     <td className="td-base font-medium text-obsidian-100">{s.fullName ?? s.fullname ?? s.name ?? '—'}</td>
                     <td className="td-base font-mono text-xs text-obsidian-400">{s.staffId ?? s.StaffId ?? '—'}</td>
                     <td className="td-base">
-                      <span className={cn('inline-flex items-center text-xs font-mono px-2 py-0.5 rounded-full border', ROLE_BADGE[s.role] ?? ROLE_BADGE.Cashier)}>
-                        {s.role}
+                      <span className={cn('inline-flex items-center text-xs font-mono px-2 py-0.5 rounded-full border', ROLE_BADGE[s.role] ?? ROLE_BADGE.cashier)}>
+                        {s.role.charAt(0).toUpperCase() + s.role.slice(1)}
                       </span>
                     </td>
                     <td className="td-base">

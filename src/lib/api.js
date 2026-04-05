@@ -68,4 +68,5 @@ export const staffApi = {
   create:       (data)    => api.post('/staff', data),
   update:       (id, d)   => api.patch(`/staff/${id}`, d),
   delete:       (id)      => api.delete(`/staff/${id}`),
+  toggleStatus: (id)      => api.patch(`/staff/${id}/toggle-status`),
 }

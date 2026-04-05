@@ -43,6 +43,21 @@ function getStaffLabel(sale) {
   )
 }
 
+function formatPaymentMethod(method) {
+  if (!method) return 'â€”'
+  if (Array.isArray(method)) {
+    return method.map((m) => {
+      if (!m) return null
+      if (typeof m === 'string' || typeof m === 'number') return String(m)
+      if (typeof m === 'object') return m.method ?? m.name ?? m.type ?? 'â€”'
+      return null
+    }).filter(Boolean).join(' + ') || 'â€”'
+  }
+  if (typeof method === 'string' || typeof method === 'number') return String(method)
+  if (typeof method === 'object') return method.method ?? method.name ?? method.type ?? 'â€”'
+  return 'â€”'
+}
+
 function ReceiptModal({ saleId, onClose }) {
   const { data: html, isLoading, isError } = useQuery({
     queryKey: ['receipt', saleId],
@@ -118,7 +133,7 @@ function SaleDetailsModal({ sale, onClose, onTogglePaid, toggling }) {
             </div>
             <div>
               <p className="text-xs font-mono text-obsidian-500 uppercase tracking-widest mb-1">Payment</p>
-              <p className="text-sm text-obsidian-100">{sale.paymentMethod ?? '—'}</p>
+              <p className="text-sm text-obsidian-100">{formatPaymentMethod(sale.paymentMethod)}</p>
             </div>
             <div>
               <p className="text-xs font-mono text-obsidian-500 uppercase tracking-widest mb-1">Staff</p>
@@ -169,17 +184,25 @@ function SaleDetailsModal({ sale, onClose, onTogglePaid, toggling }) {
             <p className="text-xs font-mono text-obsidian-500 uppercase tracking-widest mb-2">Items</p>
             {sale.items?.length ? (
               <div className="space-y-2">
-                {sale.items.map((item, idx) => (
-                  <div key={item._id ?? item.product ?? idx} className="flex items-center justify-between text-sm">
-                    <div className="min-w-0">
-                      <p className="text-obsidian-200 truncate">{item.name ?? item.productName ?? 'Item'}</p>
-                      <p className="text-xs text-obsidian-500 font-mono">x{item.quantity ?? 1}</p>
+                {sale.items.map((item, idx) => {
+                  const product = item.product && typeof item.product === 'object'
+                    ? item.product
+                    : { name: item.name ?? item.productName ?? 'Item', price: item.price }
+                  const productName = product.name ?? item.name ?? item.productName ?? 'Item'
+                  const productPrice = item.price ?? product.price ?? 0
+
+                  return (
+                    <div key={item._id ?? item.product ?? idx} className="flex items-center justify-between text-sm">
+                      <div className="min-w-0">
+                        <p className="text-obsidian-200 truncate">{productName}</p>
+                        <p className="text-xs text-obsidian-500 font-mono">x{item.quantity ?? 1}</p>
+                      </div>
+                      <p className="text-xs font-mono text-obsidian-400">
+                        {formatCurrency(productPrice)}
+                      </p>
                     </div>
-                    <p className="text-xs font-mono text-obsidian-400">
-                      {item.price ? formatCurrency(item.price) : ''}
-                    </p>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <p className="text-sm text-obsidian-500">No items found for this sale.</p>
@@ -244,7 +267,7 @@ function EodModal({ open, onClose, data, isLoading }) {
                     <div key={method} className="flex items-center justify-between text-sm">
                       <p className="text-obsidian-200">{method}</p>
                       <p className="text-xs font-mono text-receipt-gold">
-                        {info?.count ?? 0} · {formatCurrency(info?.amount ?? 0)}
+                       {formatCurrency(info?.amount ?? 0)}
                       </p>
                     </div>
                   ))}
@@ -252,6 +275,26 @@ function EodModal({ open, onClose, data, isLoading }) {
                     <p className="text-sm text-obsidian-500">No payment breakdown available.</p>
                   )}
                 </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-mono text-obsidian-500 uppercase tracking-widest mb-2">Products Sold</p>
+                {data?.productsSold?.length ? (
+                  <div className="space-y-2">
+                    {data.productsSold.map((product) => (
+                      <div key={product.productId ?? product.name} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center text-sm bg-white/5 rounded-lg p-3">
+                        <div>
+                          <p className="text-obsidian-200 truncate">{product.name}</p>
+                          {/* <p className="text-xs text-obsidian-500 font-mono">ID: {product.productId}</p> */}
+                        </div>
+                        <p className="text-xs text-obsidian-400">{product.count}</p>
+                        <p className="text-xs font-mono text-receipt-gold">{formatCurrency(product.amount)}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-obsidian-500">No products sold recorded.</p>
+                )}
               </div>
             </>
           )}
@@ -417,7 +460,7 @@ export default function HistoryPage() {
                       {sale.items?.length ?? 0} item{sale.items?.length !== 1 ? 's' : ''}
                     </td>
                     <td className="td-base">
-                      <span className="font-mono text-xs text-obsidian-400">{sale.paymentMethod}</span>
+                      <span className="font-mono text-xs text-obsidian-400">{formatPaymentMethod(sale.paymentMethod)}</span>
                     </td>
                     <td className="td-base font-mono text-receipt-gold font-semibold">
                       {formatCurrency(sale.totalAmount ?? sale.total)}
@@ -465,3 +508,4 @@ export default function HistoryPage() {
     </div>
   )
 }
+

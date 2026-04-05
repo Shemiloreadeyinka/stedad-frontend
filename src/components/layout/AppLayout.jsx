@@ -89,8 +89,8 @@ export function AppLayout({ children }) {
       {/* User profile */}
       <div className="px-3 pb-4 border-t border-[rgba(212,168,83,0.1)] pt-3">
         <div className="glass-card p-3 mb-2">
-          <p className="text-xs font-semibold text-obsidian-200 truncate">{user?.fullName ?? user?.name ?? 'Staff'}</p>
-          <p className="text-[10px] font-mono text-obsidian-500 mt-0.5 truncate">{user?.staffId}</p>
+          <p className="text-xs font-semibold text-obsidian-200 truncate">{user?.fullname}</p>
+          <p className="text-[10px] font-mono text-obsidian-500 mt-0.5 truncate">{user?.StaffId}</p>
           <span className="badge-admin mt-1.5">{user?.role}</span>
         </div>
         <button

@@ -2,13 +2,13 @@ import { useState, useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Search, Plus, Minus, Trash2, ShoppingCart,
-  CreditCard, Banknote, Smartphone, CheckCircle, Clock,
+  CreditCard, Banknote, Smartphone, Layers, CheckCircle, Clock,
 } from 'lucide-react'
 import { salesApi, productsApi } from '@/lib/api'
 import { useCart } from '@/store/cart'
 import { useAuth } from '@/store/auth'
 import { formatCurrency, getErrorMessage, PAYMENT_METHODS, isLowStock } from '@/lib/utils'
-import { Spinner, EmptyState } from '@/components/ui'
+import { Spinner, EmptyState, MultiplePaymentModal } from '@/components/ui'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 
@@ -16,6 +16,7 @@ const PAYMENT_ICONS = {
   Cash:     Banknote,
   Transfer: Smartphone,
   POS:      CreditCard,
+  Multiple: Layers,
 }
 
 
@@ -70,7 +71,14 @@ function CartItem({ item, onRemove, onQtyChange }) {
         >
           <Minus size={10} />
         </button>
-        <span className="font-mono text-sm w-6 text-center">{item.quantity}</span>
+        <input
+          type="number"
+          min="1"
+          max={item.stock}
+          value={item.quantity}
+          onChange={(e) => onQtyChange(item.productId, Number(e.target.value))}
+          className="font-mono text-sm w-14 text-center bg-obsidian-900 border border-obsidian-700 rounded-md py-1"
+        />
         <button
           onClick={() => onQtyChange(item.productId, item.quantity + 1)}
           disabled={item.quantity >= item.stock}
@@ -98,8 +106,9 @@ export default function SalesPage() {
   const { user } = useAuth()
   const {
     cart, total, count, addItem, removeItem, setQty,
-    clearCart, setCustomer, setPayment, setStatus,
+    clearCart, setCustomer, setPayment, setMultiplePayment, setStatus,
   } = useCart()
+  const [showMultiplePaymentModal, setShowMultiplePaymentModal] = useState(false)
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
@@ -118,17 +127,23 @@ export default function SalesPage() {
   const cartProductIds = new Set(cart.items.map((i) => i.productId))
 
   const { mutate: submitSale, isPending } = useMutation({
-    mutationFn: () =>
-      salesApi.create({
+    mutationFn: () => {
+      // Ensure payment amounts are set correctly
+      const paymentMethods = cart.paymentMethod.map((pm) => ({
+        ...pm,
+        amount: pm.amount === 0 ? total : pm.amount,
+      }))
+      return salesApi.create({
         customerName:  cart.customerName,
-        paymentMethod: cart.paymentMethod,
+        paymentMethod: paymentMethods,
         isPaid:        cart.status === true,
         staffId:       user?._id ?? user?.id ?? user?.staffId ?? user?.StaffId,
         items: cart.items.map((i) => ({
           product:  i.productId,
           quantity: i.quantity,
         })),
-      }),
+      })
+    },
     onSuccess: (res) => {
       toast.success('Sale recorded successfully!')
       clearCart()
@@ -141,7 +156,10 @@ export default function SalesPage() {
   const handleSubmit = () => {
     if (cart.items.length === 0) { toast.error('Cart is empty'); return }
     if (!cart.customerName?.trim()) { toast.error('Please enter customer name'); return }
-    if (!cart.paymentMethod) { toast.error('Please select payment method'); return }
+    if (!Array.isArray(cart.paymentMethod) || cart.paymentMethod.length === 0) {
+      toast.error('Please select payment method')
+      return
+    }
     if (cart.status === null || cart.status === undefined) { toast.error('Please select status'); return }
     submitSale()
   }
@@ -249,16 +267,30 @@ export default function SalesPage() {
           {/* Payment method */}
           <div>
             <label className="field-label">Payment Method</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {PAYMENT_METHODS.map((method) => {
                 const Icon = PAYMENT_ICONS[method]
+                const isMultipleSelected =
+                  !!cart.paymentBreakdown ||
+                  (Array.isArray(cart.paymentMethod) && cart.paymentMethod.length > 1)
+                const isSingleSelected =
+                  Array.isArray(cart.paymentMethod) &&
+                  cart.paymentMethod.length === 1 &&
+                  cart.paymentMethod[0]?.method === method
+                const isSelected = method === 'Multiple' ? isMultipleSelected : isSingleSelected
                 return (
                   <button
                     key={method}
-                    onClick={() => setPayment(method)}
+                    onClick={() => {
+                      if (method === 'Multiple') {
+                        setShowMultiplePaymentModal(true)
+                      } else {
+                        setPayment(method)
+                      }
+                    }}
                     className={cn(
                       'flex flex-col items-center gap-1.5 py-2.5 rounded-lg border text-xs font-medium transition-all duration-150',
-                      cart.paymentMethod === method
+                      isSelected
                         ? 'border-receipt-gold/50 bg-receipt-gold/10 text-receipt-gold'
                         : 'border-obsidian-700 text-obsidian-500 hover:border-obsidian-600',
                     )}
@@ -310,6 +342,16 @@ export default function SalesPage() {
 
         </div>
       </div>
+
+      {/* Multiple Payment Modal */}
+      <MultiplePaymentModal
+        isOpen={showMultiplePaymentModal}
+        onClose={() => setShowMultiplePaymentModal(false)}
+        total={total}
+        onConfirm={(paymentMethods) => {
+          setMultiplePayment(paymentMethods)
+        }}
+      />
     </div>
   )
 }

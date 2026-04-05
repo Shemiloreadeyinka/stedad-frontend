@@ -48,6 +48,6 @@ export function getErrorMessage(error) {
   )
 }
 
-export const PAYMENT_METHODS = ['Cash', 'Transfer', 'POS']
-export const ROLES            = ['Admin', 'Manager', 'Cashier']
+export const PAYMENT_METHODS = ['Cash', 'Transfer', 'POS', 'Multiple']
+export const ROLES            = ['admin', 'manager', 'cashier']
 export const LOW_STOCK_LIMIT  = 5
