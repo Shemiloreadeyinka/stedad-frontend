@@ -133,7 +133,17 @@ function SaleDetailsModal({ sale, onClose, onTogglePaid, toggling }) {
             </div>
             <div>
               <p className="text-xs font-mono text-obsidian-500 uppercase tracking-widest mb-1">Payment</p>
-              <p className="text-sm text-obsidian-100">{formatPaymentMethod(sale.paymentMethod)}</p>
+              {Array.isArray(sale.paymentMethod) ? (
+                <div className="space-y-1">
+                  {sale.paymentMethod.map((pm) => (
+                    <p key={pm._id ?? pm.method ?? pm.name ?? pm.type} className="text-sm text-obsidian-100">
+                      {pm.method ?? pm.name ?? pm.type ?? '—'} · {formatCurrency(pm.amount ?? pm.value ?? 0)}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-obsidian-100">{formatPaymentMethod(sale.paymentMethod)}</p>
+              )}
             </div>
             <div>
               <p className="text-xs font-mono text-obsidian-500 uppercase tracking-widest mb-1">Staff</p>
